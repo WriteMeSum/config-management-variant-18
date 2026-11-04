@@ -29,7 +29,7 @@ Maven используется исключительно как независ�
 | Пакет | Транзитивные зависимости приложения и Maven | Порядок приложения |
 | --- | --- | --- |
 | junit:junit:4.13.2 | org.hamcrest:hamcrest-core:1.3 | hamcrest-core, junit |
-| org.apache.commons:commons-text:1.10.0 | org.apache.commons:commons-lang3:3.12.0 | commons-lang3, commons-text |
+| commons-text:1.10.0 | commons-lang3:3.12.0 | commons-lang3, commons-text |
 | commons-io:commons-io:2.11.0 | Нет runtime-зависимостей | commons-io |
 
 Полные координаты и области видимости приведены в исходном выводе:

@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 80
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "N", "C90", "PLR2004"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

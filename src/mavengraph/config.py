@@ -58,7 +58,7 @@ def validate_names(values, test_mode):
         raise AppError("package: нужно groupId:artifactId или A-Z в тестах")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.+-]*", values["version"]):
         raise AppError("version: нужна фиксированная версия, например 1.0")
-    for part in values["package"].split(":"):
+    for part in values["package"].split(":") + [values["version"]]:
         if part in {".", ".."}:
             raise AppError("package: недопустимое имя")
 
@@ -74,7 +74,7 @@ def validate_repository(value, test_mode, base):
     if url.scheme not in {"http", "https"} or not url.hostname:
         raise AppError("repository: нужен URL http:// или https://")
     if url.query or url.fragment or url.username or url.password:
-        raise AppError("repository: URL не должен иметь пароль, query, fragment")
+        raise AppError("repository: пароль, query и fragment запрещены")
     try:
         url.port
     except ValueError as error:
