@@ -28,3 +28,29 @@ CSV имеет заголовок `key,value` и пять обязательны
 `load_config` читает CSV; `read_rows` проверяет его структуру;
 `boolean` разбирает флаги; `validate_names` проверяет имя и версию;
 `validate_repository` проверяет URL/файл. `main` запускает приложение.
+
+## Этап 2: прямые зависимости
+
+```sh
+./run.sh examples/junit.csv --stage 2
+# org.hamcrest:hamcrest-core:1.3
+./run.sh examples/junit.csv --stage 1
+```
+
+`Artifact` хранит координаты и формирует путь POM. `MavenRepository.fetch`
+получает XML по HTTP(S); `load` разрешает родительские POM и импорты BOM,
+кэширует модели и обнаруживает циклы parent/BOM; `dependencies` возвращает
+прямые зависимости. Весь сбор данных использует только `urllib` и
+`xml.etree.ElementTree`. Maven, pip и сторонние резолверы не вызываются.
+
+`parse_xml` проверяет XML; `text` читает поле; `expand` разрешает `${...}`;
+`coordinates` читает координаты; `properties_for` собирает свойства;
+`read_managed` обрабатывает управление версиями; `read_dependency` читает
+зависимость; `build_pom` объединяет наследование и локальные определения;
+`root_artifact` создает координаты корня из настроек.
+
+Анализируется граф compile/runtime. Области test/provided/system исключены.
+Сохраняются optional и exclusions. Версии должны быть фиксированными;
+диапазоны, динамические версии и timestamped SNAPSHOT не разрешаются.
+Активация профилей, relocation и переопределение репозиториев внутри POM
+не реализованы. Для сравнения с Maven следует выбирать runtime scope.
