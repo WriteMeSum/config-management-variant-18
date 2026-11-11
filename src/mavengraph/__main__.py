@@ -15,18 +15,20 @@ from .visualize import ascii_tree, render, show_image
 class Stage:
     """Номера демонстрационных этапов задания."""
 
-    CONFIG = 1
-    DIRECT = 2
-    GRAPH = 3
-    ORDER = 4
-    VISUALIZE = 5
+    config = 1
+    direct = 2
+    graph = 3
+    order = 4
+    visualize = 5
 
 
 def arguments(argv):
     """Прочитать конфигурацию и операционные флаги CLI."""
     parser = argparse.ArgumentParser(description="Граф зависимостей Maven")
     parser.add_argument("config", help="Путь к конфигурации CSV")
-    parser.add_argument("--stage", type=int, choices=range(1, 6), default=5,
+    stages = range(Stage.config, Stage.visualize + 1)
+    parser.add_argument("--stage", type=int, choices=stages,
+                        default=Stage.visualize,
                         help="Этап 1-5 (по умолчанию 5)")
     parser.add_argument("--output", default="output/dependencies",
                         help="Путь для D2/SVG без расширения")
@@ -41,26 +43,26 @@ def direct_dependencies(config):
         repository = TestRepository(config.repository)
         dependencies = repository.edges(config.package, frozenset(), True)
         return [str(child) for child, _ in dependencies]
-    repository = MavenRepository(config.repository)
+    repository = MavenRepository(config.repository, include_all_scopes=True)
     return [str(dep.artifact)
             for dep in repository.dependencies(root_artifact(config))]
 
 
 def execute(config, args):
     """Выполнить этап; временные отладочные выводы изолированы флагом."""
-    if args.stage == Stage.CONFIG:
+    if args.stage == Stage.config:
         for key, value in asdict(config).items():
             print(f"{key}={value}")
         return
-    if args.stage == Stage.DIRECT:
+    if args.stage == Stage.direct:
         print("\n".join(direct_dependencies(config)))
         return
     graph = configured_graph(config)
-    if args.stage == Stage.GRAPH:
+    if args.stage == Stage.graph:
         print("\n".join(edge_lines(graph)))
         for source, target in graph.cycles:
             print(f"Цикл: {source} -> {target}")
-    elif args.stage == Stage.ORDER:
+    elif args.stage == Stage.order:
         print(" -> ".join(str(node) for node in loading_order(graph)))
     else:
         source, image = render(graph, args.output)

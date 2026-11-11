@@ -11,7 +11,7 @@ SAMPLES = (
     ("commons-text", "org.apache.commons", "commons-text", "1.10.0"),
     ("commons-io", "commons-io", "commons-io", "2.11.0"),
 )
-PLUGIN = "org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree"
+PLUGIN = "org.apache.maven.plugins:maven-dependency-plugin:3.8.1"
 
 
 def wrapper_pom(group, name, version):
@@ -27,16 +27,20 @@ def wrapper_pom(group, name, version):
 '''
 
 
-def compare_sample(sample, destination):
-    """Запустить эталонный Maven и сохранить проверяемый текст дерева."""
+def compare_sample(sample, destination, resolve=False):
+    """Сохранить дерево Maven или список разрешенных зависимостей."""
     label, group, name, version = sample
-    output = destination / f"{label}-maven.txt"
+    goal = "resolve" if resolve else "tree"
+    suffix = "resolved" if resolve else "maven"
+    output = destination / f"{label}-{suffix}.txt"
     with tempfile.TemporaryDirectory(prefix="mavengraph-reference-") as temp:
         pom = Path(temp) / "pom.xml"
         pom.write_text(wrapper_pom(group, name, version), encoding="utf-8")
-        command = ["mvn", "-B", "-q", "-f", str(pom), PLUGIN,
-                   "-Dscope=runtime", "-DoutputType=text",
-                   f"-DoutputFile={output}"]
+        options = ["-DincludeScope=runtime", "-Dsort=false"] if resolve else [
+            "-Dscope=runtime", "-DoutputType=text"
+        ]
+        command = ["mvn", "-B", "-q", "-f", str(pom), f"{PLUGIN}:{goal}",
+                   f"-DoutputFile={output}", *options]
         subprocess.run(command, check=True, timeout=300)
     print(output.read_text(encoding="utf-8"))
 
@@ -45,11 +49,13 @@ def main():
     """Сохранить результаты трех независимых эталонных запусков."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default="docs/comparison")
+    parser.add_argument("--resolve", action="store_true",
+                        help="Сравнить с порядком classpath Maven")
     args = parser.parse_args()
     destination = Path(args.output).resolve()
     destination.mkdir(parents=True, exist_ok=True)
     for sample in SAMPLES:
-        compare_sample(sample, destination)
+        compare_sample(sample, destination, args.resolve)
 
 
 if __name__ == "__main__":

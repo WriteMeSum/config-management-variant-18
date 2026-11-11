@@ -88,14 +88,14 @@ def read_managed(root, properties, inherited, load):
     return managed
 
 
-def read_dependency(node, properties, managed):
-    """Получить runtime/compile ребро с версией из management."""
+def read_dependency(node, properties, managed, include_all_scopes=False):
+    """Получить зависимость с учетом выбранных областей видимости."""
     group = expand(text(node, "groupId"), properties)
     name = expand(text(node, "artifactId"), properties)
     defaults = managed.get(f"{group}:{name}", {})
     scope = expand(text(node, "scope", defaults.get("scope", "compile")),
                    properties)
-    if scope not in {"compile", "runtime"}:
+    if not include_all_scopes and scope not in {"compile", "runtime"}:
         return None
     version = expand(text(node, "version", defaults.get("version", "")),
                      properties)
@@ -111,13 +111,15 @@ def read_dependency(node, properties, managed):
                       optional == "true", exclusions)
 
 
-def build_pom(root, parent, artifact, load):
+def build_pom(root, parent, artifact, load, include_all_scopes=False):
     """Построить модель с наследованием и импортами BOM."""
     properties = properties_for(root, parent, artifact)
     managed = read_managed(root, properties, parent.managed, load)
     dependencies = {dep.artifact.key: dep for dep in parent.dependencies}
     for node in root.findall("./dependencies/dependency"):
-        dependency = read_dependency(node, properties, managed)
+        dependency = read_dependency(
+            node, properties, managed, include_all_scopes
+        )
         key = expand(text(node, "groupId"), properties) + ":" + \
             expand(text(node, "artifactId"), properties)
         dependencies.pop(key, None)

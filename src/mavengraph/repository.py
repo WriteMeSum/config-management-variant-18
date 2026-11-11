@@ -15,9 +15,10 @@ MAX_MODEL_DEPTH = 60
 class MavenRepository:
     """HTTP-репозиторий; менеджеры пакетов не вызываются."""
 
-    def __init__(self, url):
-        """Сохранить URL и создать кэш моделей POM."""
+    def __init__(self, url, *, include_all_scopes=False):
+        """Настроить URL, фильтр областей и кэш моделей POM."""
         self.url = url.rstrip("/")
+        self.include_all_scopes = include_all_scopes
         self.cache = {}
         self.loading = set()
 
@@ -49,14 +50,16 @@ class MavenRepository:
             parent = Pom()
             if parent_node is not None:
                 parent = self.load(coordinates(parent_node, {}))
-            model = build_pom(root, parent, artifact, self.load)
+            model = build_pom(
+                root, parent, artifact, self.load, self.include_all_scopes
+            )
             self.cache[artifact] = model
             return model
         finally:
             self.loading.remove(artifact)
 
     def dependencies(self, artifact):
-        """Вернуть прямые compile/runtime зависимости версии."""
+        """Вернуть прямые зависимости версии для выбранных областей."""
         return self.load(artifact).dependencies
 
 

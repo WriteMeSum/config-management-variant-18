@@ -8,6 +8,7 @@ Maven Dependency Plugin 3.8.1, репозиторий Maven Central.
 ```sh
 mvn --version
 python3 scripts/compare_maven.py
+python3 scripts/compare_maven.py --resolve --output /tmp/mavengraph-resolved
 ./run.sh examples/junit.csv --stage 4
 ./run.sh examples/commons-text.csv --stage 4
 ./run.sh examples/commons-io.csv --stage 4
@@ -45,6 +46,28 @@ Maven рисует зависимый пакет перед его зависи�
 последовательностей связано с назначением вывода, а не с различием графов.
 Maven `dependency:tree` описывает дерево, а не хронологию скачивания;
 на сетевую последовательность влияют кэш и внутренняя работа Maven.
+
+## Порядок разрешенных зависимостей Maven
+
+12 ноября 2026 года дополнительно проверен вывод Maven
+`dependency:resolve` с параметрами `-DincludeScope=runtime -Dsort=false`.
+Без сортировки плагин печатает зависимости в порядке classpath.
+
+| Пакет | Порядок программы на этапе 4 | Порядок classpath Maven |
+| --- | --- | --- |
+| JUnit 4.13.2 | hamcrest-core → junit | junit → hamcrest-core |
+| Commons Text 1.10.0 | commons-lang3 → commons-text | commons-text → commons-lang3 |
+| Commons IO 2.11.0 | commons-io | commons-io |
+
+В первых двух примерах совпадает состав пакетов. Программа строит
+топологический порядок, в котором каждая зависимость предшествует
+зависимому пакету. Maven выводит список classpath, где в этих примерах
+сначала указан прямой пакет временного проекта. Для Commons IO
+порядок совпадает, поскольку runtime-зависимостей у него нет.
+
+[Описание порядка вывода dependency:resolve][resolve]
+
+[resolve]: https://maven.apache.org/plugins-archives/maven-dependency-plugin-3.8.1/resolve-mojo.html
 
 ## Ограничения сравнения
 

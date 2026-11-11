@@ -10,7 +10,7 @@ from mavengraph.config import AppError, load_config
 class ConfigTests(unittest.TestCase):
     """Валидная конфигурация и поврежденные пользовательские значения."""
 
-    def setUp(self):
+    def prepare_config(self):
         """Создать изолированный каталог входных файлов."""
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -31,12 +31,14 @@ class ConfigTests(unittest.TestCase):
 
     def test_valid(self):
         """Корректные пять настроек читаются."""
+        self.prepare_config()
         config = load_config(self.write())
         self.assertEqual(config.package, "junit:junit")
         self.assertTrue(config.ascii_tree)
 
     def test_every_parameter_rejected_when_invalid(self):
         """Для каждого параметра есть отдельный ошибочный пример."""
+        self.prepare_config()
         invalid = {"package": "bad", "repository": "ftp://host",
                    "test_mode": "yes", "version": "[1;2]",
                    "ascii_tree": "1"}
@@ -50,6 +52,7 @@ class ConfigTests(unittest.TestCase):
 
     def test_duplicate_and_missing(self):
         """Повтор и отсутствие обязательного ключа запрещены."""
+        self.prepare_config()
         with self.assertRaises(AppError):
             load_config(self.write("package,junit:junit\n"))
         del self.values["version"]
@@ -58,5 +61,6 @@ class ConfigTests(unittest.TestCase):
 
     def test_missing_file(self):
         """Ошибка открытия файла не раскрывает traceback."""
+        self.prepare_config()
         with self.assertRaises(AppError):
             load_config(self.path)
